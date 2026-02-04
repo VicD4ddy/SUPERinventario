@@ -1,0 +1,184 @@
+
+import { useState, useEffect } from "react"
+import { Supplier } from "@/types"
+import { X, Save } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+
+interface SupplierFormProps {
+    isOpen: boolean
+    onClose: () => void
+    onSaved: () => void
+    editingSupplier: Supplier | null
+}
+
+export function SupplierForm({ isOpen, onClose, onSaved, editingSupplier }: SupplierFormProps) {
+    const [name, setName] = useState("")
+    const [contactPerson, setContactPerson] = useState("")
+    const [phone, setPhone] = useState("")
+    const [email, setEmail] = useState("")
+    const [address, setAddress] = useState("")
+    const [notes, setNotes] = useState("")
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        if (editingSupplier) {
+            setName(editingSupplier.name)
+            setContactPerson(editingSupplier.contactPerson || "")
+            setPhone(editingSupplier.phone || "")
+            setEmail(editingSupplier.email || "")
+            setAddress(editingSupplier.address || "")
+            setNotes(editingSupplier.notes || "")
+        } else {
+            // Reset
+            setName("")
+            setContactPerson("")
+            setPhone("")
+            setEmail("")
+            setAddress("")
+            setNotes("")
+        }
+    }, [editingSupplier, isOpen])
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+
+        const supplierData = {
+            name,
+            contact_person: contactPerson,
+            phone,
+            email,
+            address,
+            notes
+        }
+
+        try {
+            if (editingSupplier) {
+                const { error } = await supabase
+                    .from('suppliers')
+                    .update(supplierData)
+                    .eq('id', editingSupplier.id)
+                if (error) throw error
+            } else {
+                const { error } = await supabase
+                    .from('suppliers')
+                    .insert([supplierData])
+                if (error) throw error
+            }
+
+            onSaved()
+            onClose()
+        } catch (error) {
+            console.error("Error saving supplier:", error)
+            alert("Error al guardar el proveedor")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (!isOpen) return null
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div className="bg-slate-50 border-b border-slate-100 p-4 flex justify-between items-center">
+                    <h2 className="text-lg font-bold text-slate-900">
+                        {editingSupplier ? "Editar Proveedor" : "Nuevo Proveedor"}
+                    </h2>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1">Nombre Empresa / Proveedor *</label>
+                        <input
+                            required
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-[var(--primary)] outline-none text-slate-900 placeholder:text-slate-400"
+                            placeholder="Ej. Distribuidora Polar"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1">Persona de Contacto</label>
+                            <input
+                                type="text"
+                                value={contactPerson}
+                                onChange={(e) => setContactPerson(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-[var(--primary)] outline-none text-slate-900 placeholder:text-slate-400"
+                                placeholder="Ej. Juan Pérez"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1">Teléfono</label>
+                            <input
+                                type="text"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-[var(--primary)] outline-none text-slate-900 placeholder:text-slate-400"
+                                placeholder="Ej. +58 412 1234567"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1">Email</label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-[var(--primary)] outline-none text-slate-900 placeholder:text-slate-400"
+                                placeholder="contacto@empresa.com"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 mb-1">Dirección</label>
+                            <input
+                                type="text"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-[var(--primary)] outline-none text-slate-900 placeholder:text-slate-400"
+                                placeholder="Ciudad, Zona"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 mb-1">Notas Adicionales</label>
+                        <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-[var(--primary)] outline-none h-20 resize-none text-slate-900 placeholder:text-slate-400"
+                            placeholder="Días de despacho, cuentas bancarias, etc..."
+                        />
+                    </div>
+
+                    <div className="pt-2 flex justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="px-4 py-2 text-white rounded-lg flex items-center gap-2 text-sm font-medium disabled:opacity-50 hover:opacity-90 transition-opacity"
+                            style={{ backgroundColor: 'var(--primary)' }}
+                        >
+                            <Save size={16} />
+                            {loading ? "Guardando..." : "Guardar Proveedor"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
