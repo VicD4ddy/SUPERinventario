@@ -51,7 +51,7 @@ export default function BarcodeScanner({ onScanSuccess, onScanFailure, width = 3
         return () => {
             if (scannerRef.current) {
                 try {
-                    scannerRef.current.clear().catch(err => console.error("Failed to clear scanner", err))
+                    (scannerRef.current as any).clear().catch((err: any) => console.error("Failed to clear scanner", err))
                 } catch (e) {
                     console.error("Cleanup error", e)
                 }

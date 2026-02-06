@@ -57,7 +57,7 @@ export default function LabelGeneratorPage() {
 
         if (data) {
             // Ensure every product has a unique ID for selection logic
-            const mapped = data.map(p => ({
+            const mapped = data.map((p: any) => ({
                 ...p,
                 barcode: p.sku || p.id.split('-')[0].toUpperCase() // Fallback to ID part if no sku
             }))

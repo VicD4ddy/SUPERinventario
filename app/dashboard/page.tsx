@@ -66,19 +66,19 @@ export default function DashboardPage() {
             let totalValue = 0
             const lowStock = []
             if (products) {
-                totalValue = products.reduce((acc, curr) => acc + (curr.stock * (curr.cost_usd || 0)), 0)
-                lowStock.push(...products.filter(p => p.stock <= (p.min_stock || 5)))
+                totalValue = products.reduce((acc: number, curr: any) => acc + (curr.stock * (curr.cost_usd || 0)), 0)
+                lowStock.push(...products.filter((p: any) => p.stock <= (p.min_stock || 5)))
 
-                setProductList(products.map(p => ({ id: p.id, name: p.name })))
+                setProductList(products.map((p: any) => ({ id: p.id, name: p.name })))
                 if (products.length > 0) setSelectedProductId(products[0].id)
             }
 
             // Fetch Total Debts (Receivable & Payable)
             const { data: customers } = await supabase.from('customers').select('total_debt')
-            const totalReceivable = customers?.reduce((acc, curr) => acc + (curr.total_debt || 0), 0) || 0
+            const totalReceivable = customers?.reduce((acc: number, curr: any) => acc + (curr.total_debt || 0), 0) || 0
 
             const { data: suppliers } = await supabase.from('suppliers').select('total_debt')
-            const totalPayable = suppliers?.reduce((acc, curr) => acc + (curr.total_debt || 0), 0) || 0
+            const totalPayable = suppliers?.reduce((acc: number, curr: any) => acc + (curr.total_debt || 0), 0) || 0
 
             // 2. Monthly Stats range
             const now = new Date()
@@ -117,7 +117,7 @@ export default function DashboardPage() {
 
             let monthTotalExpenses = 0
             if (expenses) {
-                monthTotalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0)
+                monthTotalExpenses = expenses.reduce((acc: number, curr: any) => acc + curr.amount, 0)
             }
 
             const netProfit = monthTotalSales - monthTotalCOGS - monthTotalExpenses
@@ -145,7 +145,7 @@ export default function DashboardPage() {
 
             // Process Sales
             // ... (keep existing sales processing) ...
-            recentSales?.forEach(s => {
+            recentSales?.forEach((s: any) => {
                 const status = s.payment_status
                 let type = 'sale'
                 let desc = `Venta a ${s.customer_name || 'Cliente Casual'}`
@@ -199,7 +199,7 @@ export default function DashboardPage() {
             })
 
             // Process Expenses
-            recentExpenses?.forEach(e => {
+            recentExpenses?.forEach((e: any) => {
                 allActivities.push({
                     id: e.id,
                     type: 'expense',
@@ -242,7 +242,7 @@ export default function DashboardPage() {
                 })
             })
 
-            newProducts?.forEach(p => {
+            newProducts?.forEach((p: any) => {
                 allActivities.push({
                     id: p.id,
                     type: 'product_add',
@@ -369,7 +369,7 @@ export default function DashboardPage() {
                     const key = monthNames[d.getMonth()]
                     dataMap[key] = 0
                 }
-                sales.forEach(s => {
+                sales.forEach((s: any) => {
                     const d = new Date(s.created_at)
                     const key = monthNames[d.getMonth()]
                     if (dataMap[key] !== undefined) dataMap[key] += s.total_amount_usd
@@ -382,7 +382,7 @@ export default function DashboardPage() {
                 }
             } else if (timeRange === '3m') {
                 const weeks: Record<string, { total: number, sortDate: number }> = {}
-                sales.forEach(s => {
+                sales.forEach((s: any) => {
                     const d = new Date(s.created_at)
                     const day = d.getDay()
                     const diff = d.getDate() - day + (day == 0 ? -6 : 1)
@@ -402,7 +402,7 @@ export default function DashboardPage() {
                     const key = `${d.getDate()} ${monthNames[d.getMonth()]}`
                     dataMap[key] = 0
                 }
-                sales.forEach(s => {
+                sales.forEach((s: any) => {
                     const d = new Date(s.created_at)
                     const key = `${d.getDate()} ${monthNames[d.getMonth()]}`
                     if (dataMap[key] !== undefined) dataMap[key] += s.total_amount_usd
@@ -470,7 +470,7 @@ export default function DashboardPage() {
                     const key = monthNames[d.getMonth()]
                     dataMap[key] = 0
                 }
-                items?.forEach(item => {
+                items?.forEach((item: any) => {
                     const d = new Date(item.created_at)
                     const key = monthNames[d.getMonth()]
                     if (dataMap[key] !== undefined) dataMap[key] += item.quantity
@@ -483,7 +483,7 @@ export default function DashboardPage() {
                 }
             } else if (productTimeRange === '3m') {
                 const weeks: Record<string, { total: number, sortDate: number }> = {}
-                items?.forEach(item => {
+                items?.forEach((item: any) => {
                     const d = new Date(item.created_at)
                     const day = d.getDay()
                     const diff = d.getDate() - day + (day == 0 ? -6 : 1)
@@ -500,7 +500,7 @@ export default function DashboardPage() {
                     const key = `${i}:00`
                     dataMap[key] = 0
                 }
-                items?.forEach(item => {
+                items?.forEach((item: any) => {
                     const d = new Date(item.created_at)
                     const key = `${d.getHours()}:00`
                     if (dataMap[key] !== undefined) dataMap[key] += item.quantity
@@ -518,7 +518,7 @@ export default function DashboardPage() {
                     const key = `${d.getDate()} ${monthNames[d.getMonth()]}`
                     dataMap[key] = 0
                 }
-                items?.forEach(item => {
+                items?.forEach((item: any) => {
                     const d = new Date(item.created_at)
                     const key = `${d.getDate()} ${monthNames[d.getMonth()]}`
                     if (dataMap[key] !== undefined) dataMap[key] += item.quantity

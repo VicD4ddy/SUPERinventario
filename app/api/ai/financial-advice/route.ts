@@ -1,67 +1,68 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { createClient } from '@/utils/supabase/server';
 
 export async function POST() {
     try {
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
+        const supabase = await createClient();
 
-        // 0. Security Check: Admin Only
-        // Ideally we get the user from the request cookie using createRouteHandlerClient
-        // But since this file uses a static client for now, we must upgrade it to use cookie-based auth check
-        // However, looking at the code, it uses a static client without context which is DANGEROUS 
-        // as it ignores RLS.  WAIT.
+        // 1. Verify Authentication & Role
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        // CORRECTION: The current code uses `createClient` with ANON KEY but without auth context!
-        // This means it bypasses RLS if the policies are not set up correctly for anon (which they are strict).
-        // BUT wait, it calls `supabase.auth.getUser()` or relies on implicit context? 
-        // No, the previous code lines 4-7 create a raw client.
-        // This suggests the logic is actually BROKEN or running as ANON.
-        // I must fix this to use `createClient` from `@/utils/supabase/server` to get the logged in user context.
+        if (authError || !user) {
+            return NextResponse.json({ advice: "Unauthorized" }, { status: 401 });
+        }
 
-        // Let me abort this specific replace and do a better one using the correct imports.
-        throw new Error("Fixing Import First");
-    } catch (e) { }
+        // Check if Admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, business_id')
+            .eq('id', user.id)
+            .single();
 
-    // 1. Fetch Financial Context
-    const today = new Date().toISOString().split('T')[0];
+        if (profile?.role !== 'admin') {
+            return NextResponse.json({ advice: "Acceso denegado: Solo administradores." }, { status: 403 });
+        }
 
-    const results = await Promise.allSettled([
-        // A. Sales Forecast and History (Last 3 months, Next 1 month)
-        supabase.rpc('get_sales_forecast', { months_back: 3, days_forward: 30 }),
+        const apiKey = process.env.PERPLEXITY_API_KEY;
+        if (!apiKey) {
+            return NextResponse.json({ advice: "Error: Configure PERPLEXITY_API_KEY" });
+        }
+
+        // 2. Fetch Financial Context
+
+        // A. Sales Forecast (RPC)
+        const { data: forecastData, error: forecastError } = await supabase.rpc('get_sales_forecast', { months_back: 3, days_forward: 30 });
+
         // B. Expenses Last 30 Days
-        supabase.from('expenses').select('amount, category, description').gte('date', new Date(new Date().setDate(new Date().getDate() - 30)).toISOString()),
-        // C. Top Selling Products (Velocity)
-        supabase.rpc('get_stock_predictions', { p_days_analysis: 30 })
-    ]);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const { data: expensesData, error: expensesError } = await supabase
+            .from('expenses')
+            .select('amount, category, description')
+            .gte('date', thirtyDaysAgo.toISOString())
+            .eq('business_id', profile.business_id || await getBusinessId(supabase, user.id)); // Fallback or strict
 
-    const forecastData = results[0].status === 'fulfilled' ? results[0].value.data : [];
-    const expensesData = results[1].status === 'fulfilled' ? results[1].value.data : [];
-    const topProducts = results[2].status === 'fulfilled' ? results[2].value.data : [];
+        // C. Top Selling Products
+        const { data: topProducts, error: productsError } = await supabase.rpc('get_stock_predictions', { p_days_analysis: 30 });
 
-    // Calculate Summaries
-    const totalExpenses30d = expensesData?.reduce((sum: number, item: any) => sum + (item.amount || 0), 0) || 0;
+        // Calculate Summaries
+        const safeExpenses = expensesData || [];
+        const safeForecast = forecastData || [];
+        const safeProducts = topProducts || [];
 
-    // Split historical vs forecast
-    const historical = forecastData?.filter((d: any) => d.type === 'historical') || [];
-    const forecast = forecastData?.filter((d: any) => d.type === 'forecast') || [];
+        const totalExpenses30d = safeExpenses.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
 
-    // Sums
-    // Sums
-    const totalSalesLast3Months = historical.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
-    const projectedSalesNext30Days = forecast.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
+        // Split historical vs forecast
+        const historical = safeForecast.filter((d: any) => d.type === 'historical');
+        const forecast = safeForecast.filter((d: any) => d.type === 'forecast');
 
-    // Trend Analysis
-    const trendDirection = projectedSalesNext30Days > (totalSalesLast3Months / 3) ? "UP" : "DOWN";
+        const totalSalesLast3Months = historical.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
+        const projectedSalesNext30Days = forecast.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
 
-    const systemPrompt = `
+        // Trend Analysis
+        const trendDirection = projectedSalesNext30Days > (totalSalesLast3Months / 3) ? "UP" : "DOWN";
+
+        const systemPrompt = `
         You are an elite Financial Advisor for a retail business.
         
         FINANCIAL DATA:
@@ -69,7 +70,7 @@ export async function POST() {
         - Projected Sales (Next 30 Days): $${projectedSalesNext30Days.toFixed(2)}
         - Trend Direction: ${trendDirection}
         - Total Expenses (Last 30 Days): $${totalExpenses30d.toFixed(2)}
-        - Top Products (Velocity/day): ${topProducts?.slice(0, 5).map((p: any) => `${p.product_name} (${Number(p.daily_velocity).toFixed(1)})`).join(', ')}
+        - Top Products (Velocity/day): ${safeProducts.slice(0, 5).map((p: any) => `${p.product_name} (${Number(p.daily_velocity).toFixed(1)})`).join(', ')}
 
         INSTRUCTIONS:
         - Analyze the data and provide 3 key insights/recommendations.
@@ -81,29 +82,35 @@ export async function POST() {
         - Tone: Professional but encouraging.
         `;
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey} `,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            model: "sonar-pro",
-            messages: [
-                { role: "system", content: "You are a helpful financial analyst." },
-                { role: "user", content: systemPrompt }
-            ],
-            temperature: 0.2
-        })
-    });
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey} `,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: "sonar-pro",
+                messages: [
+                    { role: "system", content: "You are a helpful financial analyst." },
+                    { role: "user", content: systemPrompt }
+                ],
+                temperature: 0.2
+            })
+        });
 
-    const data = await response.json();
-    const advice = data.choices?.[0]?.message?.content || "No se pudo generar el consejo financiero.";
+        const data = await response.json();
+        const advice = data.choices?.[0]?.message?.content || "No se pudo generar el consejo financiero.";
 
-    return NextResponse.json({ advice });
+        return NextResponse.json({ advice });
 
-} catch (error: any) {
-    console.error("Financial Advisor Error:", error);
-    return NextResponse.json({ advice: "Error analizando datos financieros." });
+    } catch (error: any) {
+        console.error("Financial Advisor Error:", error);
+        return NextResponse.json({ advice: "Error analizando datos financieros." }, { status: 500 });
+    }
 }
+
+// Helper to get business_id if not in profile (redundant but safe)
+async function getBusinessId(supabase: any, userId: string) {
+    const { data } = await supabase.from('profiles').select('business_id').eq('id', userId).single();
+    return data?.business_id;
 }
