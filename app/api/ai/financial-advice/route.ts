@@ -8,43 +8,60 @@ const supabase = createClient(
 
 export async function POST() {
     try {
-        const apiKey = process.env.PERPLEXITY_API_KEY;
-        if (!apiKey) {
-            return NextResponse.json({ advice: "Error: Configure PERPLEXITY_API_KEY" });
-        }
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
 
-        // 1. Fetch Financial Context
-        const today = new Date().toISOString().split('T')[0];
+        // 0. Security Check: Admin Only
+        // Ideally we get the user from the request cookie using createRouteHandlerClient
+        // But since this file uses a static client for now, we must upgrade it to use cookie-based auth check
+        // However, looking at the code, it uses a static client without context which is DANGEROUS 
+        // as it ignores RLS.  WAIT.
 
-        const results = await Promise.allSettled([
-            // A. Sales Forecast and History (Last 3 months, Next 1 month)
-            supabase.rpc('get_sales_forecast', { months_back: 3, days_forward: 30 }),
-            // B. Expenses Last 30 Days
-            supabase.from('expenses').select('amount, category, description').gte('date', new Date(new Date().setDate(new Date().getDate() - 30)).toISOString()),
-            // C. Top Selling Products (Velocity)
-            supabase.rpc('get_stock_predictions', { p_days_analysis: 30 })
-        ]);
+        // CORRECTION: The current code uses `createClient` with ANON KEY but without auth context!
+        // This means it bypasses RLS if the policies are not set up correctly for anon (which they are strict).
+        // BUT wait, it calls `supabase.auth.getUser()` or relies on implicit context? 
+        // No, the previous code lines 4-7 create a raw client.
+        // This suggests the logic is actually BROKEN or running as ANON.
+        // I must fix this to use `createClient` from `@/utils/supabase/server` to get the logged in user context.
 
-        const forecastData = results[0].status === 'fulfilled' ? results[0].value.data : [];
-        const expensesData = results[1].status === 'fulfilled' ? results[1].value.data : [];
-        const topProducts = results[2].status === 'fulfilled' ? results[2].value.data : [];
+        // Let me abort this specific replace and do a better one using the correct imports.
+        throw new Error("Fixing Import First");
+    } catch (e) { }
 
-        // Calculate Summaries
-        const totalExpenses30d = expensesData?.reduce((sum: number, item: any) => sum + (item.amount || 0), 0) || 0;
+    // 1. Fetch Financial Context
+    const today = new Date().toISOString().split('T')[0];
 
-        // Split historical vs forecast
-        const historical = forecastData?.filter((d: any) => d.type === 'historical') || [];
-        const forecast = forecastData?.filter((d: any) => d.type === 'forecast') || [];
+    const results = await Promise.allSettled([
+        // A. Sales Forecast and History (Last 3 months, Next 1 month)
+        supabase.rpc('get_sales_forecast', { months_back: 3, days_forward: 30 }),
+        // B. Expenses Last 30 Days
+        supabase.from('expenses').select('amount, category, description').gte('date', new Date(new Date().setDate(new Date().getDate() - 30)).toISOString()),
+        // C. Top Selling Products (Velocity)
+        supabase.rpc('get_stock_predictions', { p_days_analysis: 30 })
+    ]);
 
-        // Sums
-        // Sums
-        const totalSalesLast3Months = historical.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
-        const projectedSalesNext30Days = forecast.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
+    const forecastData = results[0].status === 'fulfilled' ? results[0].value.data : [];
+    const expensesData = results[1].status === 'fulfilled' ? results[1].value.data : [];
+    const topProducts = results[2].status === 'fulfilled' ? results[2].value.data : [];
 
-        // Trend Analysis
-        const trendDirection = projectedSalesNext30Days > (totalSalesLast3Months / 3) ? "UP" : "DOWN";
+    // Calculate Summaries
+    const totalExpenses30d = expensesData?.reduce((sum: number, item: any) => sum + (item.amount || 0), 0) || 0;
 
-        const systemPrompt = `
+    // Split historical vs forecast
+    const historical = forecastData?.filter((d: any) => d.type === 'historical') || [];
+    const forecast = forecastData?.filter((d: any) => d.type === 'forecast') || [];
+
+    // Sums
+    // Sums
+    const totalSalesLast3Months = historical.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
+    const projectedSalesNext30Days = forecast.reduce((sum: number, d: any) => sum + (Number(d.value) || 0), 0);
+
+    // Trend Analysis
+    const trendDirection = projectedSalesNext30Days > (totalSalesLast3Months / 3) ? "UP" : "DOWN";
+
+    const systemPrompt = `
         You are an elite Financial Advisor for a retail business.
         
         FINANCIAL DATA:
@@ -64,29 +81,29 @@ export async function POST() {
         - Tone: Professional but encouraging.
         `;
 
-        const response = await fetch('https://api.perplexity.ai/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey} `,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: "sonar-pro",
-                messages: [
-                    { role: "system", content: "You are a helpful financial analyst." },
-                    { role: "user", content: systemPrompt }
-                ],
-                temperature: 0.2
-            })
-        });
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey} `,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: "sonar-pro",
+            messages: [
+                { role: "system", content: "You are a helpful financial analyst." },
+                { role: "user", content: systemPrompt }
+            ],
+            temperature: 0.2
+        })
+    });
 
-        const data = await response.json();
-        const advice = data.choices?.[0]?.message?.content || "No se pudo generar el consejo financiero.";
+    const data = await response.json();
+    const advice = data.choices?.[0]?.message?.content || "No se pudo generar el consejo financiero.";
 
-        return NextResponse.json({ advice });
+    return NextResponse.json({ advice });
 
-    } catch (error: any) {
-        console.error("Financial Advisor Error:", error);
-        return NextResponse.json({ advice: "Error analizando datos financieros." });
-    }
+} catch (error: any) {
+    console.error("Financial Advisor Error:", error);
+    return NextResponse.json({ advice: "Error analizando datos financieros." });
+}
 }

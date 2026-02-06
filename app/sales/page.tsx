@@ -4,9 +4,10 @@ import { useState, useEffect } from "react"
 import { ProductSearch } from "@/components/sales/ProductSearch"
 import { POSCart } from "@/components/sales/POSCart"
 import { Product, CartItem } from "@/types"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 import { useExchangeRate } from "@/hooks/useExchangeRate"
 import { useSettings } from "@/contexts/SettingsContext"
+import { useAuth } from "@/contexts/AuthContext"
 import { generatePOSTicket } from "@/utils/printTicket"
 import BarcodeScanner from "@/components/ui/BarcodeScanner"
 import { Modal } from "@/components/ui/Modal"
@@ -14,6 +15,8 @@ import { ScanBarcode, ShoppingBag, X } from "lucide-react"
 import { VoiceAssistant } from "@/components/sales/VoiceAssistant"
 
 export default function SalesPage() {
+    const supabase = createClient()
+    const { user, business } = useAuth() // Access Context
     const { rate } = useExchangeRate()
     const { businessName, phoneNumber, receiptFooter, paperSize, showTaxId } = useSettings()
     const [searchTerm, setSearchTerm] = useState("")
@@ -25,6 +28,8 @@ export default function SalesPage() {
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
         return d.toISOString().split('T')[0]
     })
+
+    /* Removed manual checkUser, using Context */
     const [customerName, setCustomerName] = useState("")
     const [paymentType, setPaymentType] = useState<'full' | 'credit' | 'partial' | 'mixed'>('full')
     const [amountPaid, setAmountPaid] = useState(0)
@@ -88,23 +93,25 @@ export default function SalesPage() {
     // Search products effect
     useEffect(() => {
         const delayDebounceFn = setTimeout(async () => {
-            let query = supabase.from('products').select('*').limit(20)
+            let query = supabase.from('products').select('*').order('created_at', { ascending: false }).limit(20)
 
             if (searchTerm.length > 0) {
-                query = query.or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%,barcode.ilike.%${searchTerm}%`)
+                query = supabase.from('products').select('*').or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%,barcode.ilike.%${searchTerm}%`).limit(20)
             }
 
             const { data, error } = await query
 
-            if (data) {
+            if (error) {
+                console.error("Error fetching products:", error)
+            } else if (data) {
                 const mappedProducts: Product[] = data.map((item: any) => ({
                     id: item.id,
                     name: item.name,
                     sku: item.sku,
                     barcode: item.barcode,
-                    stock: item.stock,
-                    costUSD: item.cost_usd,
-                    priceUSD: item.price_usd,
+                    stock: Number(item.stock),
+                    costUSD: Number(item.cost_usd),
+                    priceUSD: Number(item.price_usd),
                     createdAt: new Date(item.created_at),
                     updatedAt: new Date(item.updated_at),
                     description: item.description,
@@ -527,25 +534,25 @@ export default function SalesPage() {
         <div className="h-[calc(100vh-2rem)] flex flex-col md:flex-row gap-6 relative">
             <div className="flex-1 min-h-[500px] overflow-y-auto pb-24 md:pb-0">
                 <div className="w-full">
+                    <div className="flex gap-2 mb-4">
+                        <button
+                            onClick={() => setIsScannerOpen(true)}
+                            className="flex-1 flex items-center justify-center gap-2 bg-slate-800 text-white p-3 rounded-lg hover:bg-slate-700 transition-colors shadow-sm"
+                        >
+                            <ScanBarcode size={20} />
+                            Escanear
+                        </button>
+                        <div className="shrink-0 flex items-center justify-center">
+                            <VoiceAssistant onItemsDetected={handleVoiceItems} />
+                        </div>
+                    </div>
+
                     <ProductSearch
                         searchTerm={searchTerm}
                         onSearchChange={setSearchTerm}
                         products={products}
                         onAddToCart={handleAddToCart}
                     />
-                </div>
-
-                <div className="flex gap-2 mt-2">
-                    <button
-                        onClick={() => setIsScannerOpen(true)}
-                        className="flex-1 flex items-center justify-center gap-2 bg-slate-800 text-white p-3 rounded-lg hover:bg-slate-700 transition-colors shadow-sm"
-                    >
-                        <ScanBarcode size={20} />
-                        Escanear
-                    </button>
-                    <div className="shrink-0 flex items-center justify-center">
-                        <VoiceAssistant onItemsDetected={handleVoiceItems} />
-                    </div>
                 </div>
             </div>
 

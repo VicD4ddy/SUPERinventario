@@ -123,18 +123,44 @@ export async function exportInventoryExcel(
         font: { bold: true },
         fill: { fgColor: { rgb: "EEEEEE" } },
         border: {
-            top: { style: 'thin' }, bottom: { style: 'thin' },
-            left: { style: 'thin' }, right: { style: 'thin' }
+            top: { style: 'thin', color: { rgb: "000000" } },
+            bottom: { style: 'thin', color: { rgb: "000000" } },
+            left: { style: 'thin', color: { rgb: "000000" } },
+            right: { style: 'thin', color: { rgb: "000000" } }
         }
     }
 
     const headerStyle = {
         font: { bold: true, color: { rgb: "FFFFFF" } },
-        fill: { fgColor: { rgb: "1F4E78" } }, // Dark Blue
+        fill: { fgColor: { rgb: "4472C4" } }, // Blue
         alignment: { horizontal: "center" },
         border: {
-            top: { style: 'thin' }, bottom: { style: 'thin' },
-            left: { style: 'thin' }, right: { style: 'thin' }
+            top: { style: 'thin', color: { rgb: "000000" } },
+            bottom: { style: 'thin', color: { rgb: "000000" } },
+            left: { style: 'thin', color: { rgb: "000000" } },
+            right: { style: 'thin', color: { rgb: "000000" } }
+        }
+    }
+
+    // NEW: Editable cell style (light green)
+    const editableCellStyle = {
+        fill: { fgColor: { rgb: "D9EAD3" } }, // Light green
+        border: {
+            top: { style: 'thin', color: { rgb: "B6D7A8" } },
+            bottom: { style: 'thin', color: { rgb: "B6D7A8" } },
+            left: { style: 'thin', color: { rgb: "B6D7A8" } },
+            right: { style: 'thin', color: { rgb: "B6D7A8" } }
+        }
+    }
+
+    // NEW: Formula cell style (light gray)
+    const formulaCellStyle = {
+        fill: { fgColor: { rgb: "E8EAED" } }, // Light gray
+        border: {
+            top: { style: 'thin', color: { rgb: "CCCCCC" } },
+            bottom: { style: 'thin', color: { rgb: "CCCCCC" } },
+            left: { style: 'thin', color: { rgb: "CCCCCC" } },
+            right: { style: 'thin', color: { rgb: "CCCCCC" } }
         }
     }
 
@@ -197,7 +223,15 @@ export async function exportInventoryExcel(
             }
 
             if (ws[ref]) {
-                ws[ref].s = { border: thinBorder }
+                // Apply color coding based on column
+                if (col === 'G') {
+                    // Formula column - gray background
+                    ws[ref].s = { ...formulaCellStyle }
+                } else {
+                    // Editable columns - green background
+                    ws[ref].s = { ...editableCellStyle }
+                }
+
                 // Apply currency format to Cost (E), Price (F), Value (G)
                 if (['E', 'F', 'G'].includes(col)) {
                     ws[ref].z = currencyFormat
@@ -258,35 +292,6 @@ export async function exportInventoryExcel(
         // logic could go here
     })
 
-
-    // --- 3. Protection ---
-    // Enable Sheet Protection
-    ws['!protect'] = {
-        password: "admin", // Simple password to prevent accidental edits
-        selectLockedCells: true,
-        selectUnlockedCells: true,
-        formatCells: false,
-        insertRows: false,
-        deleteRows: false
-    }
-
-    // By default, all cells are Locked. We must UNLOCK the data inputs.
-    // Inputs: Name(A), Cat(B), SKU(C), Stock(D), Cost(E), Price(F). 
-    // Value(G) should remain LOCKED as it matches the formula.
-
-    const inputCols = ['A', 'B', 'C', 'D', 'E', 'F']
-    data.forEach((_, i) => {
-        const rowNum = dataStartIndex + i + 1
-        inputCols.forEach(col => {
-            const ref = `${col}${rowNum}`
-            if (ws[ref]) {
-                ws[ref].s = {
-                    ...ws[ref].s,
-                    protection: { locked: false } // Unlock this cell
-                }
-            }
-        })
-    })
 
     XLSX.utils.book_append_sheet(wb, ws, "Inventario")
 

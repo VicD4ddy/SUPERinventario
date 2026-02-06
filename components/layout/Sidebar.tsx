@@ -20,7 +20,7 @@ export function Sidebar() {
         { name: "Clientes", href: "/customers", icon: Users, roles: ['admin', 'seller'] },
         { name: "Proveedores", href: "/suppliers", icon: Truck, roles: ['admin'] },
         { name: "Compras", href: "/purchases", icon: ShoppingBag, roles: ['admin'] },
-        { name: "Gastos", href: "/expenses", icon: Wallet, roles: ['admin'] },
+        { name: "Gastos", href: "/expenses", icon: Wallet, roles: ['admin', 'seller'] },
         { name: "Calendario", href: "/calendar", icon: CalendarIcon, roles: ['admin', 'seller'] },
         { name: "Reportes", href: "/reports", icon: BarChart3, roles: ['admin'] },
         { name: "Configuración", href: "/settings", icon: Settings, roles: ['admin'] },

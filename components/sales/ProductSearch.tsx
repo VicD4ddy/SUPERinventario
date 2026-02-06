@@ -11,7 +11,7 @@ interface ProductSearchProps {
 
 export function ProductSearch({ searchTerm, onSearchChange, products, onAddToCart }: ProductSearchProps) {
     return (
-        <div className="flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm">
             <div className="p-4 border-b border-slate-100">
                 <div className="relative">
                     <Search
@@ -30,7 +30,7 @@ export function ProductSearch({ searchTerm, onSearchChange, products, onAddToCar
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="p-4 space-y-2">
                 {products.length === 0 ? (
                     <div className="text-center text-slate-500 py-8">
                         {searchTerm ? "No se encontraron productos." : "Comienza a buscar para agregar al carrito."}
@@ -40,7 +40,7 @@ export function ProductSearch({ searchTerm, onSearchChange, products, onAddToCar
                         <div
                             key={product.id}
                             onClick={() => product.stock > 0 && onAddToCart(product)}
-                            className={`flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-[var(--primary)] transition-colors cursor-pointer ${product.stock === 0 ? 'opacity-50 grayscale pointer-events-none' : ''}`}
+                            className={`flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-[var(--primary)] transition-colors cursor-pointer ${product.stock <= 0 ? 'opacity-50 grayscale pointer-events-none' : ''}`}
                             style={{ '--hover-bg': 'rgba(var(--primary-rgb), 0.05)' } as React.CSSProperties}
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(var(--primary-rgb), 0.05)'} // fallback or use opacity
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}

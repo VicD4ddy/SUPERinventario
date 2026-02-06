@@ -5,11 +5,12 @@ import { RefreshCw, Edit2, Wifi, WifiOff, Bell, AlertTriangle, CheckCircle2, Inf
 import { usePathname, useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import { MobileSidebar } from "@/components/layout/MobileSidebar"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 import Link from "next/link"
 import { checkStockAlerts } from "@/utils/notifications"
 
 export function Header() {
+    const supabase = createClient()
     const { rate, isManual, refreshRate, toggleManualMode, loading } = useExchangeRate()
     const pathname = usePathname()
     const router = useRouter()

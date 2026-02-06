@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, X, Wallet, ShoppingBag, AlertCircle } from "lucide-react"
 
 interface CalendarEvent {
@@ -20,6 +20,7 @@ interface DailySales {
 }
 
 export default function CalendarPage() {
+    const supabase = createClient()
     const [currentDate, setCurrentDate] = useState(new Date())
     const [events, setEvents] = useState<CalendarEvent[]>([])
     const [sales, setSales] = useState<DailySales[]>([])

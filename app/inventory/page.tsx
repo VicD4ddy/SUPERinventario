@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Product } from "@/types"
 import { ProductTable } from "@/components/inventory/ProductTable"
 import { ProductForm } from "@/components/inventory/ProductForm"
-import { ImportProductModal } from "@/components/inventory/ImportProductModal" // NEW
+import { ImportProductModal } from "@/components/inventory/ImportProductModal"
+import { ExportModal } from "@/components/inventory/ExportModal"
 import { Modal } from "@/components/ui/Modal"
 import { Plus, Tag, History, Upload, ClipboardCheck, ArrowDownToLine, Filter as FilterIcon } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
@@ -14,14 +15,16 @@ import { FilterChip } from "@/components/ui/FilterChip"
 import { useTableFilters, Filter } from "@/hooks/useTableFilters"
 import { exportInventoryExcel, exportInventoryPDF } from "@/utils/export"
 import { useSettings } from "@/contexts/SettingsContext"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function InventoryPage() {
     const supabase = createClient()
     const { businessName, phoneNumber } = useSettings()
+    const { role } = useAuth()
     const [products, setProducts] = useState<Product[]>([])
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isImportModalOpen, setIsImportModalOpen] = useState(false) // NEW
-    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -158,7 +161,7 @@ export default function InventoryPage() {
                 `${filename}.pdf`
             )
         }
-        setIsExportMenuOpen(false)
+        setIsExportModalOpen(false)
     }
 
     const handleFormSubmit = async (data: Partial<Product>) => {
@@ -278,55 +281,39 @@ export default function InventoryPage() {
                         <ClipboardCheck className="mr-2 h-4 w-4" />
                         Auditoría
                     </Link>
-                    <button
-                        onClick={() => setIsImportModalOpen(true)}
-                        className="shrink-0 flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-200 transition-opacity shadow-sm hover:opacity-90"
-                    >
-                        <ArrowDownToLine className="mr-2 h-4 w-4" />
-                        Importar
-                    </button>
-                    <Link
-                        href="/inventory/labels"
-                        className="shrink-0 flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-200 transition-opacity shadow-sm hover:opacity-90"
-                    >
-                        <Tag className="mr-2 h-4 w-4" />
-                        Etiquetas
-                    </Link>
-                    {/* Export Dropdown */}
-                    <div className="relative shrink-0">
-                        <button
-                            onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-                            className="flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-200 transition-opacity shadow-sm hover:opacity-90"
-                        >
-                            <Upload className="mr-2 h-4 w-4 rotate-180" />
-                            Exportar
-                        </button>
-
-                        {isExportMenuOpen && (
-                            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-                                <button
-                                    onClick={() => handleExport('excel')}
-                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                                >
-                                    <span className="text-green-600 font-bold text-xs uppercase w-8">XLS</span> Exportar Excel
-                                </button>
-                                <button
-                                    onClick={() => handleExport('pdf')}
-                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                                >
-                                    <span className="text-red-600 font-bold text-xs uppercase w-8">PDF</span> Exportar PDF
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                    <button
-                        onClick={handleCreate}
-                        className="hidden md:flex shrink-0 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity shadow-sm hover:opacity-90"
-                        style={{ backgroundColor: 'var(--primary)' }}
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nuevo Producto
-                    </button>
+                    {role === 'admin' && (
+                        <>
+                            <button
+                                onClick={() => setIsImportModalOpen(true)}
+                                className="shrink-0 flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-200 transition-opacity shadow-sm hover:opacity-90"
+                            >
+                                <ArrowDownToLine className="mr-2 h-4 w-4" />
+                                Importar
+                            </button>
+                            <Link
+                                href="/inventory/labels"
+                                className="shrink-0 flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-200 transition-opacity shadow-sm hover:opacity-90"
+                            >
+                                <Tag className="mr-2 h-4 w-4" />
+                                Etiquetas
+                            </Link>
+                            <button
+                                onClick={() => setIsExportModalOpen(true)}
+                                className="shrink-0 flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 dark:bg-slate-800 dark:text-slate-200 transition-opacity shadow-sm hover:opacity-90"
+                            >
+                                <Upload className="mr-2 h-4 w-4 rotate-180" />
+                                Exportar
+                            </button>
+                            <button
+                                onClick={handleCreate}
+                                className="hidden md:flex shrink-0 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity shadow-sm hover:opacity-90"
+                                style={{ backgroundColor: 'var(--primary)' }}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nuevo Producto
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -398,12 +385,21 @@ export default function InventoryPage() {
                 }}
             />
 
-            {/* Mobile FAB */}
-            <FloatingActionButton
-                onClick={handleCreate}
-                icon={Plus}
-                label="Nuevo"
+            <ExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                onExportExcel={() => handleExport('excel')}
+                onExportPDF={() => handleExport('pdf')}
             />
+
+            {/* Mobile FAB */}
+            {role === 'admin' && (
+                <FloatingActionButton
+                    onClick={handleCreate}
+                    icon={Plus}
+                    label="Nuevo"
+                />
+            )}
         </div>
     )
 }

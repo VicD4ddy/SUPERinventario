@@ -41,7 +41,7 @@ export function BottomNavigation() {
     }
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg safe-area-inset-bottom">
+        <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg safe-area-inset-bottom ${pathname === '/sales' ? 'hidden' : ''}`}>
             <div className="grid grid-cols-5 h-16">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
@@ -52,8 +52,8 @@ export function BottomNavigation() {
                             key={item.href}
                             href={item.href}
                             className={`flex flex-col items-center justify-center gap-1 transition-all relative group active:scale-95 ${isActive
-                                    ? 'text-[var(--primary)]'
-                                    : 'text-slate-400 active:text-slate-600'
+                                ? 'text-[var(--primary)]'
+                                : 'text-slate-400 active:text-slate-600'
                                 }`}
                         >
                             {/* Active indicator */}

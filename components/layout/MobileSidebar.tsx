@@ -52,8 +52,10 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
     if (!isOpen) return null
 
+    // Use high z-index to ensure it appears above everything else
+    // z-50 might be conflicted with other elements like BottomNav
     return (
-        <div className="fixed inset-0 z-50 flex">
+        <div className="fixed inset-0 z-[100] flex">
             {/* Backdrop */}
             <div
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-300"

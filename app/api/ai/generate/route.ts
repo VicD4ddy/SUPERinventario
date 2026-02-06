@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
 import { Buffer } from 'buffer';
+import { createClient } from '@/utils/supabase/server';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Increase timeout if possible (Vercel specific but good documentation)
 
 export async function POST(request: Request) {
     try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ result: "Unauthorized" }, { status: 401 });
+        }
+
         const { prompt, type } = await request.json();
         const apiKey = process.env.PERPLEXITY_API_KEY;
 

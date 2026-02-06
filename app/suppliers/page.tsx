@@ -1,21 +1,32 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 import { Supplier } from "@/types"
 import { SupplierPaymentModal } from "@/components/suppliers/SupplierPaymentModal"
 import { SupplierForm } from "@/components/suppliers/SupplierForm"
 import { useExchangeRate } from "@/hooks/useExchangeRate"
 import { Plus, Search, Truck, Phone, Mail, Edit, Trash2, DollarSign } from "lucide-react"
 import { FloatingActionButton } from "@/components/ui/FloatingActionButton"
+import { useAuth } from "@/contexts/AuthContext"
+import { useRouter } from "next/navigation"
 
 export default function SuppliersPage() {
     const { rate } = useExchangeRate()
+    const { role, loading: authLoading } = useAuth()
+    const router = useRouter()
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
     const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
+
+    useEffect(() => {
+        if (!authLoading && role !== 'admin') {
+            router.push('/sales')
+        }
+    }, [role, authLoading, router])
+
+    if (authLoading || role !== 'admin') return <div className="p-8 text-center text-slate-500">Cargando...</div>
 
     // Modal State
     const [isFormOpen, setIsFormOpen] = useState(false)

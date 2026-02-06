@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 import { PurchaseOrder, PurchaseItem } from "@/types"
-import { ArrowLeft, Calendar, Truck, CheckCircle2, AlertCircle, Package } from "lucide-react"
+import { ArrowLeft, Printer, Download, CreditCard, Calendar, User, Package, DollarSign } from "lucide-react"
+import { useSettings } from "@/contexts/SettingsContext"
+import { generatePurchasePDF } from "@/utils/printPurchaseOrder"
 import Link from "next/link"
 
 export default function PurchaseDetailsPage() {
+    const supabase = createClient()
     const { id } = useParams()
     const router = useRouter()
+    const { businessName, phoneNumber } = useSettings()
     const [order, setOrder] = useState<PurchaseOrder | null>(null)
     const [items, setItems] = useState<PurchaseItem[]>([])
     const [loading, setLoading] = useState(true)

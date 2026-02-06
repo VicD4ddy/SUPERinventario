@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 import { Supplier, Product } from "@/types"
 import { ArrowLeft, Save, Plus, Trash2, Search, Package } from "lucide-react"
 import Link from "next/link"
@@ -16,6 +16,7 @@ interface PurchaseItemInput {
 }
 
 export default function NewPurchasePage() {
+    const supabase = createClient()
     const router = useRouter()
     const [loading, setLoading] = useState(false)
 

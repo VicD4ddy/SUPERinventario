@@ -9,6 +9,7 @@ import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { CommandPaletteProvider } from "@/contexts/CommandPaletteContext";
 import { CommandPaletteWrapper } from "@/components/layout/CommandPaletteWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AppShell } from "@/components/layout/AppShell";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -43,16 +44,9 @@ export default function RootLayout({
           <ErrorBoundary>
             <AuthProvider>
               <CommandPaletteProvider>
-                <div className="flex h-screen bg-slate-50 overflow-hidden">
-                  <Sidebar />
-                  <div className="flex flex-col flex-1 overflow-hidden">
-                    <Header />
-                    <main className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6">
-                      {children}
-                    </main>
-                  </div>
-                </div>
-                <BottomNavigation />
+                <AppShell>
+                  {children}
+                </AppShell>
                 <CommandPaletteWrapper />
               </CommandPaletteProvider>
             </AuthProvider>

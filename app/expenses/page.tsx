@@ -9,9 +9,11 @@ import { ExpenseForm } from "@/components/expenses/ExpenseForm"
 import { Modal } from "@/components/ui/Modal"
 import { Plus, Filter, Calendar as CalendarIcon, Download } from "lucide-react"
 import { FloatingActionButton } from "@/components/ui/FloatingActionButton"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function ExpensesPage() {
     const supabase = createClient()
+    const { role } = useAuth()
 
     // Data State
     const [expenses, setExpenses] = useState<Expense[]>([])
@@ -88,8 +90,6 @@ export default function ExpensesPage() {
                 </div>
 
                 <div className="flex gap-2">
-                    {/* Date Filter (Simple) */}
-                    {/* Date Filter (Simple) */}
                     <input
                         type="date"
                         value={dateRange.start}
@@ -116,11 +116,13 @@ export default function ExpensesPage() {
                 </div>
             </div>
 
-            {/* Stats Cards */}
-            <ExpenseStats
-                financials={financials}
-                totalVES={0} // Placeholder, not strictly needed for this view anymore
-            />
+            {/* Stats Cards - Conditionally Rendered */}
+            {role === 'admin' && (
+                <ExpenseStats
+                    financials={financials}
+                    totalVES={0}
+                />
+            )}
 
             {/* Main Table */}
             <div>

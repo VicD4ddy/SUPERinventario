@@ -4,10 +4,24 @@ import Link from "next/link"
 import { useSettings } from "@/contexts/SettingsContext"
 import { createClient } from "@/utils/supabase/client"
 import { Save, Shield, ChevronRight, Store, Receipt, Calculator, Settings2, Download } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { useRouter } from "next/navigation"
 
 export default function SettingsPage() {
     const settings = useSettings() // Get all settings from context
     const { updateSettings } = settings
+    const { role, loading } = useAuth()
+    const router = useRouter()
+
+    useEffect(() => {
+        if (!loading && role !== 'admin') {
+            router.push('/sales')
+        }
+    }, [role, loading, router])
+
+    if (loading || role !== 'admin') return <div className="p-8 text-center text-slate-500">Cargando...</div>
+
+
 
     // Local state for all fields
     const [formData, setFormData] = useState({
@@ -57,8 +71,7 @@ export default function SettingsPage() {
         alert("Configuración guardada exitosamente.")
     }
 
-    const [isExporting, setIsExporting] = useState(false)
-    const supabase = createClient() // We need this here for the direct fetch
+    const [isRestoring, setIsRestoring] = useState(false)
 
     const handleExportBackup = async () => {
         try {
@@ -74,7 +87,7 @@ export default function SettingsPage() {
             const url = window.URL.createObjectURL(blob)
             const a = document.createElement('a')
             a.href = url
-            a.download = `full-backup-inventario-${new Date().toISOString().split('T')[0]}.json`
+            a.download = `backup-${settings.businessName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.json`
             document.body.appendChild(a)
             a.click()
             window.URL.revokeObjectURL(url)
@@ -87,6 +100,50 @@ export default function SettingsPage() {
             alert("Error al generar el respaldo. Revisa la consola.")
         } finally {
             setIsExporting(false)
+        }
+    }
+
+    const handleRestoreBackup = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (!file) return
+
+        if (!confirm("ADVERTENCIA: Esta acción REEMPLAZARÁ todos los datos actuales (productos, clientes, ventas) por los del archivo de respaldo. \n\n¿Estás seguro de continuar?")) {
+            event.target.value = "" // Reset input
+            return
+        }
+
+        try {
+            setIsRestoring(true)
+            const reader = new FileReader()
+
+            reader.onload = async (e) => {
+                try {
+                    const jsonContent = JSON.parse(e.target?.result as string)
+
+                    // Call RPC to restore
+                    const { error } = await supabase.rpc('restore_from_backup', {
+                        backup_data: jsonContent
+                    })
+
+                    if (error) throw error
+
+                    alert("¡Restauración completada con éxito! La página se recargará.")
+                    window.location.reload()
+
+                } catch (parseError: any) {
+                    console.error("Restore error:", parseError)
+                    alert("Error al procesar el archivo: " + parseError.message)
+                }
+            }
+
+            reader.readAsText(file)
+
+        } catch (error: any) {
+            console.error("Upload error:", error)
+            alert("Error al subir archivo: " + error.message)
+        } finally {
+            setIsRestoring(false)
+            event.target.value = "" // Reset input
         }
     }
 
@@ -346,6 +403,29 @@ export default function SettingsPage() {
                                         <Download size={16} className={isExporting ? "animate-bounce" : ""} />
                                         {isExporting ? "Exportando..." : "Exportar JSON"}
                                     </button>
+                                </div>
+                                <div className="p-4 border border-red-200 rounded-lg bg-red-50 flex items-center justify-between">
+                                    <div>
+                                        <h5 className="font-bold text-red-900">Restaurar Datos</h5>
+                                        <p className="text-xs text-red-700">Importa un archivo de respaldo. <span className="font-bold">Cuidado: Esto borrará los datos actuales.</span></p>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            accept=".json"
+                                            onChange={handleRestoreBackup}
+                                            disabled={isRestoring}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                        />
+                                        <button
+                                            type="button"
+                                            disabled={isRestoring}
+                                            className="flex items-center gap-2 bg-white border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50"
+                                        >
+                                            <Download size={16} className={`rotate-180 ${isRestoring ? "animate-bounce" : ""}`} />
+                                            {isRestoring ? "Restaurando..." : "Importar Respaldo"}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

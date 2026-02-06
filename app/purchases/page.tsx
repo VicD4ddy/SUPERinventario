@@ -1,14 +1,27 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 import { PurchaseOrder } from "@/types"
 import { Plus, Search, ShoppingBag, Calendar, Truck, AlertCircle, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
+import { useRouter } from "next/navigation"
 
 export default function PurchasesPage() {
+    const supabase = createClient()
+    const { role, loading: authLoading } = useAuth()
+    const router = useRouter()
     const [orders, setOrders] = useState<PurchaseOrder[]>([])
     const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        if (!authLoading && role !== 'admin') {
+            router.push('/sales')
+        }
+    }, [role, authLoading, router])
+
+    if (authLoading || role !== 'admin') return <div className="p-8 text-center text-slate-500">Cargando...</div>
     const [searchTerm, setSearchTerm] = useState("")
 
     useEffect(() => {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Customer } from "@/types"
 import { X, Save } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 
 interface CustomerFormProps {
     isOpen: boolean
@@ -11,6 +11,9 @@ interface CustomerFormProps {
 }
 
 export function CustomerForm({ isOpen, onClose, onSaved, editingCustomer }: CustomerFormProps) {
+    const supabase = createClient() // Initialize supabase client
+    const { user, business } = useAuth() // Add useAuth hook
+
     const [name, setName] = useState("")
     const [phone, setPhone] = useState("")
     const [email, setEmail] = useState("")

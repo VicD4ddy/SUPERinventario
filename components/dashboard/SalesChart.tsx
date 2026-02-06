@@ -29,7 +29,7 @@ export function SalesChart({ data }: SalesChartProps) {
     }
 
     return (
-        <div className="h-[300px] w-full">
+        <div className="w-full" style={{ height: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                     data={data}

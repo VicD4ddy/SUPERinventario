@@ -12,8 +12,17 @@ interface ProductTableProps {
     onDelete: (id: string) => void
 }
 
+import { useAuth } from "@/contexts/AuthContext"
+
+interface ProductTableProps {
+    products: Product[]
+    onEdit: (product: Product) => void
+    onDelete: (id: string) => void
+}
+
 export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) {
     const { rate } = useExchangeRate()
+    const { role } = useAuth()
     const { sortedData, sortKey, sortDirection, handleSort } = useSortableTable({
         data: products,
         initialSortKey: 'name'
@@ -65,13 +74,15 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                                 currentDirection={sortDirection}
                                 onSort={handleSort as (key: string) => void}
                             />
-                            <SortableHeader
-                                label="Costo ($)"
-                                sortKey="costUSD"
-                                currentSortKey={sortKey as string}
-                                currentDirection={sortDirection}
-                                onSort={handleSort as (key: string) => void}
-                            />
+                            {role === 'admin' && (
+                                <SortableHeader
+                                    label="Costo ($)"
+                                    sortKey="costUSD"
+                                    currentSortKey={sortKey as string}
+                                    currentDirection={sortDirection}
+                                    onSort={handleSort as (key: string) => void}
+                                />
+                            )}
                             <SortableHeader
                                 label="Precio ($)"
                                 sortKey="priceUSD"
@@ -105,29 +116,33 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                                         {product.stock}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-slate-500">${product.costUSD.toFixed(2)}</td>
+                                {role === 'admin' && (
+                                    <td className="px-6 py-4 text-slate-500">${product.costUSD.toFixed(2)}</td>
+                                )}
                                 <td className="px-6 py-4 font-semibold text-slate-900">${product.priceUSD.toFixed(2)}</td>
                                 <td className="px-6 py-4 font-bold" style={{ color: 'var(--primary)' }}>
                                     {(product.priceUSD * rate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <div className="flex justify-end space-x-2">
-                                        <button
-                                            onClick={() => onEdit(product)}
-                                            className="p-1 hover:bg-slate-100 rounded text-slate-500 transition-colors"
-                                            style={{ '--hover-color': 'var(--primary)' } as React.CSSProperties}
-                                            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.color = ''}
-                                        >
-                                            <Edit size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => onDelete(product.id)}
-                                            className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-red-600 transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
+                                    {role === 'admin' && (
+                                        <div className="flex justify-end space-x-2">
+                                            <button
+                                                onClick={() => onEdit(product)}
+                                                className="p-1 hover:bg-slate-100 rounded text-slate-500 transition-colors"
+                                                style={{ '--hover-color': 'var(--primary)' } as React.CSSProperties}
+                                                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.color = ''}
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => onDelete(product.id)}
+                                                className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-red-600 transition-colors"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -160,10 +175,17 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                         </div>
 
                         <div className="grid grid-cols-3 gap-2 bg-slate-50/80 p-3 rounded-xl border border-slate-100 text-sm">
-                            <div className="flex flex-col items-center justify-center">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Costo</span>
-                                <span className="font-semibold text-slate-600">${product.costUSD.toFixed(1)}</span>
-                            </div>
+                            {role === 'admin' ? (
+                                <div className="flex flex-col items-center justify-center">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Costo</span>
+                                    <span className="font-semibold text-slate-600">${product.costUSD.toFixed(1)}</span>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">SKU</span>
+                                    <span className="font-semibold text-slate-600 text-xs">{product.sku}</span>
+                                </div>
+                            )}
                             <div className="flex flex-col items-center justify-center border-l border-slate-200/60">
                                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Precio $</span>
                                 <span className="font-bold text-slate-800 text-lg">${product.priceUSD.toFixed(2)}</span>
@@ -177,22 +199,26 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                         </div>
 
                         <div className="flex gap-3 pt-1">
-                            <button
-                                onClick={() => onEdit(product)}
-                                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all shadow-sm active:scale-[0.98]"
-                            >
-                                <Edit size={16} /> Editar
-                            </button>
-                            <button
-                                onClick={() => onDelete(product.id)}
-                                className="flex items-center justify-center w-12 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl border border-red-100 transition-colors"
-                            >
-                                <Trash2 size={18} />
-                            </button>
+                            {role === 'admin' && (
+                                <>
+                                    <button
+                                        onClick={() => onEdit(product)}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all shadow-sm active:scale-[0.98]"
+                                    >
+                                        <Edit size={16} /> Editar
+                                    </button>
+                                    <button
+                                        onClick={() => onDelete(product.id)}
+                                        className="flex items-center justify-center w-12 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl border border-red-100 transition-colors"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 ))}
             </div>
-        </div>
+        </div >
     )
 }

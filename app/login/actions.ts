@@ -34,6 +34,7 @@ export async function signup(formData: FormData) {
         options: {
             data: {
                 full_name: formData.get('full_name') as string,
+                business_name: formData.get('business_name') as string, // SaaS: Pass business name to trigger
             }
         }
     }

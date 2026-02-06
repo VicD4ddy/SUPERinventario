@@ -1,5 +1,8 @@
+"use client"
+
 import { Customer } from "@/types"
 import { Phone, Mail, MapPin, Edit, Trash2 } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface CustomerTableProps {
     customers: Customer[]
@@ -9,6 +12,8 @@ interface CustomerTableProps {
 }
 
 export function CustomerTable({ customers, onEdit, onDelete, onRegisterPayment }: CustomerTableProps) {
+    const { role } = useAuth()
+
     if (customers.length === 0) {
         return (
             <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
@@ -107,13 +112,15 @@ export function CustomerTable({ customers, onEdit, onDelete, onRegisterPayment }
                                         >
                                             <Edit size={14} />
                                         </button>
-                                        <button
-                                            onClick={() => onDelete(customer.id)}
-                                            className="p-1.5 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 rounded-lg transition-all shadow-sm"
-                                            title="Eliminar"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+                                        {role === 'admin' && (
+                                            <button
+                                                onClick={() => onDelete(customer.id)}
+                                                className="p-1.5 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 rounded-lg transition-all shadow-sm"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
@@ -174,12 +181,14 @@ export function CustomerTable({ customers, onEdit, onDelete, onRegisterPayment }
                             >
                                 <Edit size={16} /> Editar
                             </button>
-                            <button
-                                onClick={() => onDelete(customer.id)}
-                                className="w-10 py-2 bg-white border border-slate-200 text-red-500 rounded-xl flex items-center justify-center"
-                            >
-                                <Trash2 size={18} />
-                            </button>
+                            {role === 'admin' && (
+                                <button
+                                    onClick={() => onDelete(customer.id)}
+                                    className="w-10 py-2 bg-white border border-slate-200 text-red-500 rounded-xl flex items-center justify-center"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            )}
                         </div>
                     </div>
                 ))}

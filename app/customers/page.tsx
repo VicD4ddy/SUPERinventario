@@ -9,10 +9,12 @@ import { CustomerForm } from "@/components/customers/CustomerForm"
 import { PaymentModal } from "@/components/customers/PaymentModal"
 import { Plus, Search, Users } from "lucide-react"
 import { FloatingActionButton } from "@/components/ui/FloatingActionButton"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function CustomersPage() {
     const supabase = createClient()
     const { rate } = useExchangeRate()
+    const { role } = useAuth()
     const [customers, setCustomers] = useState<Customer[]>([])
     const [searchTerm, setSearchTerm] = useState("")
     const [isFormOpen, setIsFormOpen] = useState(false)

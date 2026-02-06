@@ -10,11 +10,13 @@ import { TopProducts } from "@/components/dashboard/TopProducts"
 import { StockPredictionWidget } from "@/components/dashboard/StockPredictionWidget"
 import { useExchangeRate } from "@/hooks/useExchangeRate"
 import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase"
+// import { supabase } from "@/lib/supabase" <-- REMOVED
+import { createClient } from "@/utils/supabase/client"
 import Link from "next/link"
 import { MobileQuickActions } from "@/components/dashboard/MobileQuickActions"
 
 export default function DashboardPage() {
+    const supabase = createClient() // Instantiate here
     const { rate } = useExchangeRate()
     const [stats, setStats] = useState({
         totalStockValue: 0,

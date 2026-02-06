@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { Supplier } from "@/types"
 import { X, Save } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 
 interface SupplierFormProps {
     isOpen: boolean
@@ -12,6 +12,7 @@ interface SupplierFormProps {
 }
 
 export function SupplierForm({ isOpen, onClose, onSaved, editingSupplier }: SupplierFormProps) {
+    const supabase = createClient()
     const [name, setName] = useState("")
     const [contactPerson, setContactPerson] = useState("")
     const [phone, setPhone] = useState("")

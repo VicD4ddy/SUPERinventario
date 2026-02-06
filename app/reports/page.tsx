@@ -1,13 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { BarChart3, TrendingUp, Sparkles } from "lucide-react"
 import { SalesTab } from "@/components/reports/SalesTab"
 import { PredictionsTab } from "@/components/reports/PredictionsTab"
 import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
+import { useRouter } from "next/navigation"
 
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState<'sales' | 'predictions'>('sales')
+    const { role, loading } = useAuth()
+    const router = useRouter()
+
+    useEffect(() => {
+        if (!loading && role !== 'admin') {
+            router.push('/sales')
+        }
+    }, [role, loading, router])
+
+    if (loading || role !== 'admin') return <div className="p-8 text-center text-slate-500">Cargando...</div>
 
     return (
         <div className="space-y-6">

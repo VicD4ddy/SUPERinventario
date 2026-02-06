@@ -51,16 +51,29 @@ function LoginForm() {
                         </div>
 
                         {!isLogin && (
-                            <div className="animate-in fade-in slide-in-from-top-1 duration-300">
-                                <label className="block text-sm font-bold text-slate-800 mb-1" htmlFor="full_name">Nombre Completo</label>
-                                <input
-                                    id="full_name"
-                                    name="full_name"
-                                    type="text"
-                                    required={!isLogin}
-                                    className="w-full px-3 py-2 border border-slate-300 bg-white text-slate-900 font-medium rounded-lg focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] outline-none"
-                                    placeholder="Juan Pérez"
-                                />
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-1 duration-300">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-800 mb-1" htmlFor="business_name">Nombre de tu Negocio</label>
+                                    <input
+                                        id="business_name"
+                                        name="business_name"
+                                        type="text"
+                                        required={!isLogin}
+                                        className="w-full px-3 py-2 border border-slate-300 bg-white text-slate-900 font-medium rounded-lg focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] outline-none"
+                                        placeholder="Ej: Zapatería La Moda"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-800 mb-1" htmlFor="full_name">Nombre Completo</label>
+                                    <input
+                                        id="full_name"
+                                        name="full_name"
+                                        type="text"
+                                        required={!isLogin}
+                                        className="w-full px-3 py-2 border border-slate-300 bg-white text-slate-900 font-medium rounded-lg focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)] outline-none"
+                                        placeholder="Juan Pérez"
+                                    />
+                                </div>
                             </div>
                         )}
                         <div>

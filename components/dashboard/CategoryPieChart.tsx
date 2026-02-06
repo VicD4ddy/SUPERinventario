@@ -21,7 +21,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
     }
 
     return (
-        <div className="h-[300px] w-full flex flex-col items-center justify-center">
+        <div className="w-full flex flex-col items-center justify-center" style={{ height: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie
