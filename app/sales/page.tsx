@@ -16,7 +16,7 @@ import { VoiceAssistant } from "@/components/sales/VoiceAssistant"
 
 export default function SalesPage() {
     const supabase = createClient()
-    const { user, business } = useAuth() // Access Context
+    const { user, businessId } = useAuth() // Access Context
     const { rate } = useExchangeRate()
     const { businessName, phoneNumber, receiptFooter, paperSize, showTaxId } = useSettings()
     const [searchTerm, setSearchTerm] = useState("")
@@ -607,9 +607,9 @@ export default function SalesPage() {
                         onUpdateQuantity={handleUpdateQuantity}
                         onRemoveItem={handleRemoveItem}
                         onClearCart={() => setCart([])}
-                        onCheckout={(e) => {
+                        onCheckout={() => {
                             setIsCartOpen(false) // Close modal on checkout start
-                            handleCheckout(e)
+                            handleCheckout()
                         }}
                         saleDate={saleDate}
                         onSaleDateChange={setSaleDate}

@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { createClient } from "@/utils/supabase/client"
-import { User } from "@supabase/supabase-js"
+import { User, AuthChangeEvent, Session } from "@supabase/supabase-js"
 import { useRouter, usePathname } from "next/navigation"
 
 // ... imports
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         fetchUser()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 if (session?.user) {
                     setUser(session.user)

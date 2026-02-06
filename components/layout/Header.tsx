@@ -50,7 +50,7 @@ export function Header() {
 
         if (data) {
             setNotifications(data)
-            setUnreadCount(data.filter(n => !n.is_read).length)
+            setUnreadCount(data.filter((n: any) => !n.is_read).length)
         }
     }
 
@@ -80,7 +80,7 @@ export function Header() {
         // Realtime Subscription
         const subscription = supabase
             .channel('notifications_header')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, payload => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload: any) => {
                 // Determine if this notification is for us
                 // payload.new.user_id check is tricky in client without auth context readily available in payload always
                 // But we can just refetch for simplicity or optimistic update

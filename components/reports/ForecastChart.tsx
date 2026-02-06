@@ -80,8 +80,8 @@ export function ForecastChart({ data }: ForecastChartProps) {
                         <Tooltip
                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                             labelFormatter={(label) => new Date(label).toLocaleDateString()}
-                            formatter={(value: number, name: string) => [
-                                `$${value.toFixed(2)}`,
+                            formatter={(value: any, name: any) => [
+                                value ? `$${Number(value).toFixed(2)}` : '$0.00',
                                 name === 'historical' ? 'Histórico' : (name === 'forecast' ? 'Proyección' : 'Valor')
                             ]}
                         />

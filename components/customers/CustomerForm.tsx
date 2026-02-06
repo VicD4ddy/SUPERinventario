@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Customer } from "@/types"
 import { X, Save } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface CustomerFormProps {
     isOpen: boolean
@@ -12,7 +13,7 @@ interface CustomerFormProps {
 
 export function CustomerForm({ isOpen, onClose, onSaved, editingCustomer }: CustomerFormProps) {
     const supabase = createClient() // Initialize supabase client
-    const { user, business } = useAuth() // Add useAuth hook
+    const { user, businessId } = useAuth() // Add useAuth hook
 
     const [name, setName] = useState("")
     const [phone, setPhone] = useState("")

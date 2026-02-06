@@ -67,11 +67,13 @@ export default function SettingsPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        await updateSettings(formData)
+        await updateSettings(formData as any)
         alert("Configuración guardada exitosamente.")
     }
 
     const [isRestoring, setIsRestoring] = useState(false)
+    const [isExporting, setIsExporting] = useState(false)
+    const supabase = createClient()
 
     const handleExportBackup = async () => {
         try {

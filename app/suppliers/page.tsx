@@ -15,6 +15,7 @@ export default function SuppliersPage() {
     const { rate } = useExchangeRate()
     const { role, loading: authLoading } = useAuth()
     const router = useRouter()
+    const supabase = createClient()
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
     const [filteredSuppliers, setFilteredSuppliers] = useState<Supplier[]>([])
     const [loading, setLoading] = useState(true)

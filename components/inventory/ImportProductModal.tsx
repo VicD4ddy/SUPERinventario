@@ -51,7 +51,7 @@ export function ImportProductModal({ isOpen, onClose, onSuccess }: ImportProduct
                         .in('sku', skusToCheck)
 
                     // Create map for easy lookup
-                    existingProducts?.forEach(p => {
+                    existingProducts?.forEach((p: any) => {
                         existingProductsMap.set(p.sku, p)
                     })
 
@@ -124,7 +124,7 @@ export function ImportProductModal({ isOpen, onClose, onSuccess }: ImportProduct
                 .from('categories')
                 .select('name')
 
-            const existingCatNames = new Set(existingCats?.map(c => c.name.toLowerCase()) || [])
+            const existingCatNames = new Set(existingCats?.map((c: any) => c.name.toLowerCase()) || [])
 
             // 3. Filter only NEW categories
             const newCategories = uniqueCategories.filter(
@@ -162,7 +162,7 @@ export function ImportProductModal({ isOpen, onClose, onSuccess }: ImportProduct
                     .select('id, sku, stock')
                     .in('sku', skus)
 
-                const productMap = new Map(currentProducts?.map(p => [p.sku, p]))
+                const productMap = new Map(currentProducts?.map((p: any) => [p.sku, p]))
 
                 const movementsToLog: any[] = []
 
@@ -170,6 +170,9 @@ export function ImportProductModal({ isOpen, onClose, onSuccess }: ImportProduct
                     if (!item.sku) continue
                     const current = productMap.get(item.sku)
                     if (!current) continue // Should not happen if SKU matched before
+
+                    // Cast current to any to access properties safely since Map might be inferred as Map<any, any>
+                    const currentProduct = current as any;
 
                     // Update Product
                     const { error } = await supabase
@@ -180,18 +183,18 @@ export function ImportProductModal({ isOpen, onClose, onSuccess }: ImportProduct
                             cost_usd: item.cost,
                             updated_at: new Date()
                         } as any)
-                        .eq('id', current.id)
+                        .eq('id', currentProduct.id)
 
                     if (error) throw error
 
                     // Log Movement if stock changed
-                    if (current.stock !== item.stock) {
-                        const diff = item.stock - current.stock
+                    if (currentProduct.stock !== item.stock) {
+                        const diff = item.stock - currentProduct.stock
                         movementsToLog.push({
-                            product_id: current.id,
+                            product_id: currentProduct.id,
                             type: 'ADJUSTMENT',
                             quantity: Math.abs(diff),
-                            previous_stock: current.stock,
+                            previous_stock: currentProduct.stock,
                             new_stock: item.stock,
                             reference: 'Importación Excel (Actualización)',
                             user_id: userId,
@@ -229,7 +232,7 @@ export function ImportProductModal({ isOpen, onClose, onSuccess }: ImportProduct
 
                 // Log Movements for New Products
                 if (newProducts) {
-                    const newMovements = newProducts.map(p => ({
+                    const newMovements = newProducts.map((p: any) => ({
                         product_id: p.id,
                         type: 'IN', // Initial stock
                         quantity: p.stock,
